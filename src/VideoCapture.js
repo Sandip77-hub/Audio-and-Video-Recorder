@@ -77,14 +77,29 @@ const VideoRecorder = () => {
 		setVideoChunks(localVideoChunks);
 	};
 
-	const stopRecording = () => {
+	const stopRecording = async () => {
 		setPermission(false);
 		setRecordingStatus("inactive");
 		mediaRecorder.current.stop();
 
-		mediaRecorder.current.onstop = () => {
+		mediaRecorder.current.onstop = async () => {
 			const videoBlob = new Blob(videoChunks, { type: mimeType });
 			const videoUrl = URL.createObjectURL(videoBlob);
+			const formData = new FormData();
+        formData.append('video', videoBlob, 'recorded_video.webm');
+
+        try {
+            const response = await fetch('your-backend-api-endpoint', {
+                method: 'POST',
+                body: formData,
+            });
+
+            // Handle the response from the backend as needed
+        } catch (error) {
+            console.error('Error sending video data to backend:', error);
+        }
+
+        setRecordedVideo(URL.createObjectURL(videoBlob));
 
 			setRecordedVideo(videoUrl);
 

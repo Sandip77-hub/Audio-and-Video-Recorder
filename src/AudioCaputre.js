@@ -51,20 +51,31 @@ const AudioRecorder = () => {
 		setAudioChunks(localAudioChunks);
 	};
 
-	const stopRecording = () => {
+	const stopRecording = async () => {
 		setRecordingStatus("inactive");
 		mediaRecorder.current.stop();
-
-		mediaRecorder.current.onstop = () => {
+	
+		mediaRecorder.current.onstop = async () => {
 			const audioBlob = new Blob(audioChunks, { type: mimeType });
-			const audioUrl = URL.createObjectURL(audioBlob);
+			const audioUrl=URL.createObjectURL(audioBlob);
+			const formData = new FormData();
+        formData.append('audio', audioBlob);
 
+        try {
+            const response = await fetch('your-backend-api-endpoint', {
+                method: 'POST',
+                body: formData,
+            });
+            // Handle response from the backend if needed
+        } catch (error) {
+            console.error('Error sending audio data to backend:', error);
+        }
 			setAudio(audioUrl);
-
+	
 			setAudioChunks([]);
 		};
 	};
-
+	
 	return (
 		<div>
 			<h2>Audio Recorder</h2>
