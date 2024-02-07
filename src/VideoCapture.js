@@ -3,148 +3,143 @@ import { useState, useRef } from "react";
 const mimeType = 'video/webm; codecs="opus,vp8"';
 
 const VideoRecorder = () => {
-	const [permission, setPermission] = useState(false);
+    const [permission, setPermission] = useState(false);
+    const mediaRecorder = useRef(null);
+    const liveVideoFeed = useRef(null);
+    const [recordingStatus, setRecordingStatus] = useState("inactive");
+    const [stream, setStream] = useState(null);
+    const [recordedVideo, setRecordedVideo] = useState(null);
+    const [videoChunks, setVideoChunks] = useState([]);
 
-	const mediaRecorder = useRef(null);
+    const getCameraPermission = async () => {
+        setRecordedVideo(null);
 
-	const liveVideoFeed = useRef(null);
+        if ("MediaRecorder" in window) {
+            try {
+                const videoConstraints = {
+                    audio: false,
+                    video: true,
+                };
+                const audioConstraints = { audio: true };
 
-	const [recordingStatus, setRecordingStatus] = useState("inactive");
+                const audioStream = await navigator.mediaDevices.getUserMedia(
+                    audioConstraints
+                );
+                const videoStream = await navigator.mediaDevices.getUserMedia(
+                    videoConstraints
+                );
 
-	const [stream, setStream] = useState(null);
+                setPermission(true);
 
-	const [recordedVideo, setRecordedVideo] = useState(null);
+                const combinedStream = new MediaStream([
+                    ...videoStream.getVideoTracks(),
+                    ...audioStream.getAudioTracks(),
+                ]);
 
-	const [videoChunks, setVideoChunks] = useState([]);
+                setStream(combinedStream);
 
-	const getCameraPermission = async () => {
-		setRecordedVideo(null);
-		//get video and audio permissions and then stream the result media stream to the videoSrc variable
-		if ("MediaRecorder" in window) {
-			try {
-				const videoConstraints = {
-					audio: false,
-					video: true,
-				};
-				const audioConstraints = { audio: true };
+                liveVideoFeed.current.srcObject = videoStream;
+            } catch (err) {
+                alert(err.message);
+            }
+        } else {
+            alert("The MediaRecorder API is not supported in your browser.");
+        }
+    };
 
-				// create audio and video streams separately
-				const audioStream = await navigator.mediaDevices.getUserMedia(
-					audioConstraints
-				);
-				const videoStream = await navigator.mediaDevices.getUserMedia(
-					videoConstraints
-				);
+    const startRecording = async () => {
+        setRecordingStatus("recording");
 
-				setPermission(true);
+        const media = new MediaRecorder(stream, { mimeType });
 
-				//combine both audio and video streams
+        mediaRecorder.current = media;
 
-				const combinedStream = new MediaStream([
-					...videoStream.getVideoTracks(),
-					...audioStream.getAudioTracks(),
-				]);
+        mediaRecorder.current.start();
 
-				setStream(combinedStream);
+        let localVideoChunks = [];
 
-				//set videostream to live feed player
-				liveVideoFeed.current.srcObject = videoStream;
-			} catch (err) {
-				alert(err.message);
-			}
-		} else {
-			alert("The MediaRecorder API is not supported in your browser.");
-		}
-	};
+        mediaRecorder.current.ondataavailable = (event) => {
+            if (typeof event.data === "undefined") return;
+            if (event.data.size === 0) return;
+            localVideoChunks.push(event.data);
+        };
 
-	const startRecording = async () => {
-		setRecordingStatus("recording");
+        setVideoChunks(localVideoChunks);
+    };
 
-		const media = new MediaRecorder(stream, { mimeType });
+    const stopRecording = async () => {
+        setPermission(false);
+        setRecordingStatus("inactive");
+        mediaRecorder.current.stop();
 
-		mediaRecorder.current = media;
-
-		mediaRecorder.current.start();
-
-		let localVideoChunks = [];
-
-		mediaRecorder.current.ondataavailable = (event) => {
-			if (typeof event.data === "undefined") return;
-			if (event.data.size === 0) return;
-			localVideoChunks.push(event.data);
-		};
-
-		setVideoChunks(localVideoChunks);
-	};
-
-	const stopRecording = async () => {
-		setPermission(false);
-		setRecordingStatus("inactive");
-		mediaRecorder.current.stop();
-
-		mediaRecorder.current.onstop = async () => {
-			const videoBlob = new Blob(videoChunks, { type: mimeType });
-			const videoUrl = URL.createObjectURL(videoBlob);
-			const formData = new FormData();
-        formData.append('video', videoBlob, 'recorded_video.webm');
-
-        try {
-            const response = await fetch('your-backend-api-endpoint', {
-                method: 'POST',
-                body: formData,
-            });
-
-            // Handle the response from the backend as needed
-        } catch (error) {
-            console.error('Error sending video data to backend:', error);
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
         }
 
-        setRecordedVideo(URL.createObjectURL(videoBlob));
+        if (liveVideoFeed.current) {
+            liveVideoFeed.current.srcObject = null;
+        }
 
-			setRecordedVideo(videoUrl);
+        mediaRecorder.current.onstop = async () => {
+            const videoBlob = new Blob(videoChunks, { type: mimeType });
+            const videoUrl = URL.createObjectURL(videoBlob);
+            const formData = new FormData();
+            formData.append('video', videoBlob, 'recorded_video.webm');
 
-			setVideoChunks([]);
-		};
-	};
+            try {
+                const response = await fetch('your-backend-api-endpoint', {
+                    method: 'POST',
+                    body: formData,
+                });
 
-	return (
-		<div>
-			<h2>Video Recorder</h2>
-			<main>
-				<div className="video-controls">
-					{!permission ? (
-						<button onClick={getCameraPermission} type="button">
-							Get Camera
-						</button>
-					) : null}
-					{permission && recordingStatus === "inactive" ? (
-						<button onClick={startRecording} type="button">
-							Start Recording
-						</button>
-					) : null}
-					{recordingStatus === "recording" ? (
-						<button onClick={stopRecording} type="button">
-							Stop Recording
-						</button>
-					) : null}
-				</div>
-			</main>
+                // Handle the response from the backend as needed
+            } catch (error) {
+                console.error('Error sending video data to backend:', error);
+            }
 
-			<div className="video-player">
-				{!recordedVideo ? (
-					<video ref={liveVideoFeed} autoPlay className="live-player"></video>
-				) : null}
-				{recordedVideo ? (
-					<div className="recorded-player">
-						<video className="recorded" src={recordedVideo} controls></video>
-						<a download href={recordedVideo}>
-							Download Recording
-						</a>
-					</div>
-				) : null}
-			</div>
-		</div>
-	);
+            setRecordedVideo(videoUrl);
+            setVideoChunks([]);
+        };
+    };
+
+    return (
+        <div>
+            <h2>Video Recorder</h2>
+            <main>
+                <div className="video-controls">
+                    {!permission ? (
+                        <button onClick={getCameraPermission} type="button">
+                            Get Camera
+                        </button>
+                    ) : null}
+                    {permission && recordingStatus === "inactive" ? (
+                        <button onClick={startRecording} type="button">
+                            Start Recording
+                        </button>
+                    ) : null}
+                    {recordingStatus === "recording" ? (
+                        <button onClick={stopRecording} type="button">
+                            Stop Recording
+                        </button>
+                    ) : null}
+                </div>
+            </main>
+
+            <div className="video-player">
+                {!recordedVideo ? (
+                    <video ref={liveVideoFeed} autoPlay className="live-player"></video>
+                ) : null}
+                {recordedVideo ? (
+                    <div className="recorded-player">
+                        <video className="recorded" src={recordedVideo} controls></video>
+                        <a download href={recordedVideo}>
+                            Download Recording
+                        </a>
+                    </div>
+                ) : null}
+            </div>
+        </div>
+    );
 };
 
 export default VideoRecorder;

@@ -54,6 +54,9 @@ const AudioRecorder = () => {
 	const stopRecording = async () => {
 		setRecordingStatus("inactive");
 		mediaRecorder.current.stop();
+		if (stream) {
+			stream.getTracks().forEach(track => track.stop());
+		}
 	
 		mediaRecorder.current.onstop = async () => {
 			const audioBlob = new Blob(audioChunks, { type: mimeType });
