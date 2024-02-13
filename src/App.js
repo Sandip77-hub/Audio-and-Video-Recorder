@@ -22,8 +22,9 @@ const App = () => {
 			</div>
 			<div>
 				{recordOption === "video" ? <VideoCapture/> : <AudioCapture />}
-				<ShowResult/>
+				
 			</div>
+			<ShowResult/>
 		</div>
 	);
 };
