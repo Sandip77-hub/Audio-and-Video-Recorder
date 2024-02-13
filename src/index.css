@@ -63,13 +63,14 @@ button:focus-visible {
 .button-flex {
 	display: flex;
 	justify-content: center;
-	align-items: center;
+	align-items:center;
 	gap: 10px;
 }
 
 .audio-controls,
 .video-controls {
 	margin-bottom: 20px;
+	align-content: center;
 }
 
 .audio-player,

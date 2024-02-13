@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import "./ShowResult.css";
 
-const ShowResult= () => {
+const ShowResult = () => {
   const [result, setResult] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -41,10 +42,22 @@ const ShowResult= () => {
 
   return (
     <div>
+      
+      <div>
+        <input type="file" onChange={handleFileChange} accept="video/*" />
+        <button onClick={handleUpload}>Upload Video</button>
+      </div>
+      {selectedFile && (
+        <div>
+          <h3>Selected Video:</h3>
+          <video controls width="400">
+            <source src={URL.createObjectURL(selectedFile)} type={selectedFile.type} />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      )}
       <h2>Display Result</h2>
       <button onClick={fetchData}>Show Result</button>
-      <input type="file" onChange={handleFileChange} accept="video/*" />
-      <button onClick={handleUpload}>Upload Video</button>
       {result && (
         <div>
           {typeof result === 'string' ? (
