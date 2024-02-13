@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const ShowResult = () => {
+const ShowResult= () => {
   const [result, setResult] = useState(null);
 
   const fetchData = async () => {
@@ -15,12 +15,15 @@ const ShowResult = () => {
 
   return (
     <div>
-      <h1>Display Results from Backend</h1>
+      <h2>Display Result</h2>
       <button onClick={fetchData}>Show Result</button>
       {result && (
         <div>
-          <h2>Result:</h2>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+          {typeof result === 'string' ? (
+            <p>{result}</p>
+          ) : (
+            <img src={result.imageUrl} alt="Result" />
+          )}
         </div>
       )}
     </div>

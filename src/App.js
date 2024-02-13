@@ -2,6 +2,7 @@ import "./App.css";
 import { useState } from "react";
 import VideoCapture from "./VideoCapture";
 import AudioCapture from "./AudioCaputre";
+import ShowResult from "./ShowResult";
 
 const App = () => {
 	let [recordOption, setRecordOption] = useState("video");
@@ -21,6 +22,7 @@ const App = () => {
 			</div>
 			<div>
 				{recordOption === "video" ? <VideoCapture/> : <AudioCapture />}
+				<ShowResult/>
 			</div>
 		</div>
 	);
