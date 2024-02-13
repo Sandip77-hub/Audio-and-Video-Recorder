@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './ShowResult.css';
 
 const ShowResult= () => {
   const [result, setResult] = useState(null);
