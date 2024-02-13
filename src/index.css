@@ -6,7 +6,7 @@
 
 	color-scheme: light dark;
 	color: rgba(0, 0, 0, 0.87);
-	background-color:rgb(119, 189, 216);
+	background-color:rgb(255, 255, 255);
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
@@ -48,7 +48,7 @@ button {
 	font-size: 1em;
 	font-weight: 500;
 	font-family: inherit;
-	background-color: #c42323;
+	background-color: #3235e7;
 	cursor: pointer;
 	transition: border-color 0.25s;
 }
